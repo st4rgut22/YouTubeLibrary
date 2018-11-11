@@ -2,6 +2,7 @@ import requests
 import sys
 import time
 import urllib.request
+import re
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -10,6 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 options = Options()
+
 options.add_extension('/Users/edwardcox/chrome_extension/extension_1_5_21_0.crx')
 
 #chrome_options.add_extension('/Users/edwardcox/Desktop/extension_1_5_21_0.crx')
@@ -45,7 +47,7 @@ class YoutubeSubtitlesScraper:
             url = playlist_single_btns[i].get_attribute('href')
             for title, link, channel in self.subtitles(url):
                 try: 
-                    self.subtitles_file.write(title + '\t' + link + '\t' + channel + '\n')
+                    self.subtitles_file.write('\t' + title + '\t' + link + '\t' + channel + '\n')
                 except Exception as e:
                     print(e)
                 self.driver.get(playlist_url) #return to the previous page
@@ -56,11 +58,20 @@ class YoutubeSubtitlesScraper:
             self.driver.get(url)
             self.enable_subtitles()            
             link = self.get_subtitles_link()
-            print(link)
+            if link != "":
+                matchObj = re.match(r"(.*)expire=[^&]*(&.*)", link)
+                link = matchObj.group(1)+matchObj.group(2)
             self.enable_subtitles()
-            video_title = self.driver.find_element_by_xpath('/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[3]/div[1]/div/div[5]/div[2]/ytd-video-primary-info-renderer/div/h1/yt-formatted-string').text
-            channel_name = self.driver.find_element_by_xpath('/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[3]/div[1]/div/div[7]/div[3]/ytd-video-secondary-info-renderer/div/div[2]/ytd-video-owner-renderer/div[1]/div/yt-formatted-string/a').text
+            print(link)
+            #self.enable_subtitles()
+            channel_name = self.wait.until(EC.presence_of_element_located((By.XPATH,"//ytd-video-owner-renderer/div/div/yt-formatted-string/a"))).text
+            video_title = self.wait.until(EC.presence_of_element_located((By.XPATH,'//ytd-video-primary-info-renderer/div/h1/yt-formatted-string'))).text
+            #video_title = self.driver.find_element_by_xpath('/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[3]/div[1]/div/div[5]/div[2]/ytd-video-primary-info-renderer/div/h1/yt-formatted-string').text
+            #channel_name = self.wait.until(EC.presence_of_element_located((By.XPATH,'/html/body/ytd-app/div[1]/ytd-page-manager/ytd-watch-flexy/div[3]/div[1]/div/ytd-playlist-panel-renderer/div/div/div/div[1]/div/div/yt-formatted-string/a'))).text
+            print("channel " + channel_name)
+            print("video " + video_title)
         except Exception as e:
+            print(e)
             link = ""
             video_title = "Missing Video"
             channel_name=""

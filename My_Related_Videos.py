@@ -1,5 +1,6 @@
 import requests 
 import sys
+import re
 import time
 import urllib.request
 from bs4 import BeautifulSoup
@@ -45,6 +46,9 @@ class YoutubeSubtitlesScraper:
             self.enable_subtitles()
 
             link = self.get_subtitles_link()
+            if link!="":
+                matchObj = re.match( r'(.*)expire=(.*)key(.*)', link)
+                link = matchObj.group(1) + "key" + matchObj.group(3) #excludes expiry data
             #empty strings are falsy
             yield filename, link, self.scrape_subtitles(link) if link else "No Closed Caption"
 
